@@ -46,6 +46,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -143,7 +144,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (addressList.size() > 0){
                 Address address = addressList.get(0);
                 String streetAddress = address.getAddressLine(0);
-
                 mMap.addMarker(new MarkerOptions()
                         .position(latLng)
                         .title(streetAddress));
@@ -178,9 +178,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         Log.d(TAG, "onFailure: GeoFence not added " + error); }
                 });
 
+        HashMap<String, LatLng> setHashMap = HashMapInstance.getHashMap();
+        setHashMap.put(ID,latLng);
         Log.d(TAG, "addGeoFence: String ID set To GeoFence: " + ID);
         Log.d(TAG, "addGeoFence: LatLng latLng set To GeoFence: " + latLng);
-        geoFenceHelper.setHashMap(ID,latLng);
     }
 
     /*---------------------------------------------Location Updates through requests and fusedLocationProviderClient + SettingsClient------------------------------------*/
@@ -335,7 +336,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         stopLocationUpdates();
         mMap.clear();
         geofencingClient.removeGeofences(geoFenceHelper.getPendingIntent());
-        geoFenceHelper.clearHashMap();
         Log.d(TAG, "onDestroy: geoFencingClient.removeGeoFences");
         Log.d(TAG, "onDestroy: Map is cleared");
         Log.d(TAG, "onDestroy: stopLocationUpdates");
