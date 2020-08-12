@@ -5,8 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
@@ -62,17 +65,17 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
-    //doInBackGround,onProgressUpdate,onPostExecute
-    //Params, Progress, Result
-    private static class TaskExecuting extends AsyncTask<Void, float[], Void> {
+    private static class TaskExecuting extends AsyncTask<Void, Float, Void> {
         PendingResult pendingResult;
         Intent intent;
         GeofencingEvent geofencingEvent;
         Location location;
         float[] results = new float[10];
+        String ID;
 
         HashMap<String,LatLng> getHashMap = HashMapInstance.getHashMap();
-        List<Float> getList = HashMapInstance.getList();
+        List<Float> setList = HashMapInstance.getList();
+        HashMap<String,Float> setDistanceHashMap = HashMapInstance.getDistanceHashMap();
 
         double geoFenceLatitude;
         double geoFenceLongitude;
@@ -92,7 +95,7 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
             List<Geofence> geoFenceList = geofencingEvent.getTriggeringGeofences();
             for (Geofence geofence: geoFenceList) {
 
-                String ID = geofence.getRequestId();
+                ID = geofence.getRequestId();
                 Log.d(TAG, "onReceive: RequestId of the geoFence: " + ID);
                 geoFenceLatitude = Objects.requireNonNull(getHashMap.get(ID)).latitude;
                 geoFenceLongitude = Objects.requireNonNull(getHashMap.get(ID)).longitude;
@@ -100,9 +103,11 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
 
                 Location.distanceBetween(location.getLatitude(),location.getLongitude(),geoFenceLatitude,geoFenceLongitude,results);
                 Log.d(TAG, "doInBackground: Location.distanceBetween: " + results[0]);
+
+                setDistanceHashMap.put(ID,results[0]);
             }
 
-            publishProgress(results);
+            publishProgress(results[0]);
 
             if (getHashMap.size() >= 2){
                 for (Map.Entry<String, LatLng> set : getHashMap.entrySet()) {
@@ -113,24 +118,35 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
         }
 
         @Override
-        protected void onProgressUpdate(float[]... values) {
+        protected void onProgressUpdate(Float... values) {
             super.onProgressUpdate(values);
-            getList.add(results[0]);
-            Log.d(TAG, "onProgressUpdate: " + Arrays.toString(getList.toArray()));
+            setList.add(results[0]);
+            Log.d(TAG, "onProgressUpdate: " + Arrays.toString(setList.toArray()));
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            if (getList.size() >= 1){
-                float minimum = Collections.min(getList);
-                Log.d(TAG, "onPostExecute: MINIMUM: " + minimum);
+            if (setList.size() >= 1){
+                float minimum = Collections.min(setList);
+                Log.d(TAG, "onPostExecute: MINIMUM In the List: " + minimum);
+            }
+
+            if (setDistanceHashMap.size() >= 1){
+                for (Map.Entry<String, Float> set : setDistanceHashMap.entrySet()) {
+                    Log.d(TAG, "onReceive: Map.Entry<String, Float>: " + set.getKey() + " = " + set.getValue());
+                }
+                float minimum = Collections.min(setDistanceHashMap.values());
+                Log.d(TAG, "onPostExecute: MINIMUM In The HashMap: " + minimum);
+
+                for (Map.Entry<String, Float> entry : setDistanceHashMap.entrySet()) {
+                    if (Objects.equals(minimum, entry.getValue())) {
+                        Log.d(TAG, "onPostExecute: ID reference of the geoFence of the minimum value: " + entry.getKey());
+                    }
+                }
             }
             pendingResult.finish();
         }
     }
-
-    /*----------------------------------------------------------------------Additional Information-----------------------------------------------------*/
-                                                                    /*int minList = Collections.min(list);*/
-                                            /*Value value = Collections.min(map.entrySet(), Map.Entry.comparingByValue()).getValue()*/
 }
