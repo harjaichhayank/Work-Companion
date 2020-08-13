@@ -9,11 +9,9 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
-
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-
 import java.util.Random;
 
 public class NotificationHelper extends ContextWrapper {
@@ -41,10 +39,11 @@ public class NotificationHelper extends ContextWrapper {
         manager.createNotificationChannel(notificationChannel);
     }
 
-    public void sendHighPriorityNotification(String title, String body, Class activityName) {
+    public void sendHighPriorityNotification(String title, String body, Class<MapsActivity> activityName) {
 
         Intent intent = new Intent(this, activityName);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 267, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        int REQUEST_CODE = 267;
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_background)

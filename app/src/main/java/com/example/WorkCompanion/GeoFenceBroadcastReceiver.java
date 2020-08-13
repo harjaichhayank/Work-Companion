@@ -1,5 +1,6 @@
 package com.example.WorkCompanion;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,9 +9,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
-
 import androidx.annotation.RequiresApi;
-
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.maps.model.LatLng;
@@ -25,12 +24,13 @@ import java.util.Objects;
 public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
 
     private static final String TAG = "GeoFenceBroadcastRec";
+    GeofencingEvent geofencingEvent;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive: geoFence added");
 
-        GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+        geofencingEvent = GeofencingEvent.fromIntent(intent);
 
         NotificationHelper notificationHelper = new NotificationHelper(context);
 
@@ -41,7 +41,7 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
 
         Log.d(TAG, "onReceive: PendingResult and New Task: created");
         PendingResult pendingResult = goAsync();
-        new TaskExecuting(pendingResult,intent,geofencingEvent).execute();
+        new TaskExecuting(pendingResult,intent,geofencingEvent,context).execute();
 
         Log.d(TAG, "onReceive: transitionTypes created");
         int transitionType = geofencingEvent.getGeofenceTransition();
@@ -50,22 +50,24 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
                 Log.d(TAG, "onReceive: " + "GEO_FENCE TRANSITION ENTER");
                 Toast.makeText(context, "GEO_FENCE TRANSITION ENTER", Toast.LENGTH_SHORT).show();
-                notificationHelper.sendHighPriorityNotification("Notification Received"," ",MapsActivity.class);
+                notificationHelper.sendHighPriorityNotification("GEO_FENCE TRANSITION ENTER "," ",MapsActivity.class);
                 break;
             case Geofence.GEOFENCE_TRANSITION_DWELL:
                 Log.d(TAG, "onReceive: " + "GEO_FENCE TRANSITION DWELL");
                 Toast.makeText(context, "GEO_FENCE TRANSITION DWELL", Toast.LENGTH_SHORT).show();
-                notificationHelper.sendHighPriorityNotification("Notification Received"," ",MapsActivity.class);
+                notificationHelper.sendHighPriorityNotification("GEO_FENCE TRANSITION DWELL "," ",MapsActivity.class);
                 break;
             case Geofence.GEOFENCE_TRANSITION_EXIT:
                 Log.d(TAG, "onReceive: " + "GEO_FENCE TRANSITION EXIT");
                 Toast.makeText(context, "GEO_FENCE TRANSITION EXIT", Toast.LENGTH_SHORT).show();
-                notificationHelper.sendHighPriorityNotification("Notification Received"," ",MapsActivity.class);
+                notificationHelper.sendHighPriorityNotification("GEO_FENCE TRANSITION EXIT "," ",MapsActivity.class);
                 break;
         }
     }
 
-    private static class TaskExecuting extends AsyncTask<Void, Float, Void> {
+    @SuppressLint("StaticFieldLeak")
+    private class TaskExecuting extends AsyncTask<Void, Float, Void> {
+        Context context;
         PendingResult pendingResult;
         Intent intent;
         GeofencingEvent geofencingEvent;
@@ -73,18 +75,19 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
         float[] results = new float[10];
         String ID;
 
+        public TaskExecuting(PendingResult pendingResult, Intent intent, GeofencingEvent geofencingEvent,Context context) {
+            this.pendingResult = pendingResult;
+            this.intent = intent;
+            this.geofencingEvent = geofencingEvent;
+            this.context = context;
+        }
+
         HashMap<String,LatLng> getHashMap = HashMapInstance.getHashMap();
         List<Float> setList = HashMapInstance.getList();
         HashMap<String,Float> setDistanceHashMap = HashMapInstance.getDistanceHashMap();
 
         double geoFenceLatitude;
         double geoFenceLongitude;
-
-        public TaskExecuting(PendingResult pendingResult, Intent intent, GeofencingEvent geofencingEvent) {
-            this.pendingResult = pendingResult;
-            this.intent = intent;
-            this.geofencingEvent = geofencingEvent;
-        }
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -128,6 +131,7 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+
             if (setList.size() >= 1){
                 float minimum = Collections.min(setList);
                 Log.d(TAG, "onPostExecute: MINIMUM In the List: " + minimum);
@@ -137,12 +141,15 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
                 for (Map.Entry<String, Float> set : setDistanceHashMap.entrySet()) {
                     Log.d(TAG, "onReceive: Map.Entry<String, Float>: " + set.getKey() + " = " + set.getValue());
                 }
+
                 float minimum = Collections.min(setDistanceHashMap.values());
                 Log.d(TAG, "onPostExecute: MINIMUM In The HashMap: " + minimum);
 
                 for (Map.Entry<String, Float> entry : setDistanceHashMap.entrySet()) {
                     if (Objects.equals(minimum, entry.getValue())) {
                         Log.d(TAG, "onPostExecute: ID reference of the geoFence of the minimum value: " + entry.getKey());
+                        Toast.makeText(context, "onPostExecute: ID reference of the geoFence of the minimum value: " + entry.getKey()
+                                + " With Minimum Distance Being: " + minimum, Toast.LENGTH_LONG).show();
                     }
                 }
             }
