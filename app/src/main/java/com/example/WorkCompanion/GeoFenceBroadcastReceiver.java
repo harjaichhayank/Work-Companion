@@ -41,7 +41,7 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
 
         Log.d(TAG, "onReceive: PendingResult and New Task: created");
         PendingResult pendingResult = goAsync();
-        new TaskExecuting(pendingResult,intent,geofencingEvent,context).execute();
+        new TaskExecuting(pendingResult,intent,geofencingEvent).execute();
 
         Log.d(TAG, "onReceive: transitionTypes created");
         int transitionType = geofencingEvent.getGeofenceTransition();
@@ -67,7 +67,7 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
 
     @SuppressLint("StaticFieldLeak")
     private class TaskExecuting extends AsyncTask<Void, Float, Void> {
-        Context context;
+        Context context = MyApplication.getAppContext();
         PendingResult pendingResult;
         Intent intent;
         GeofencingEvent geofencingEvent;
@@ -75,11 +75,10 @@ public class GeoFenceBroadcastReceiver extends BroadcastReceiver {
         float[] results = new float[10];
         String ID;
 
-        public TaskExecuting(PendingResult pendingResult, Intent intent, GeofencingEvent geofencingEvent,Context context) {
+        public TaskExecuting(PendingResult pendingResult, Intent intent, GeofencingEvent geofencingEvent) {
             this.pendingResult = pendingResult;
             this.intent = intent;
             this.geofencingEvent = geofencingEvent;
-            this.context = context;
         }
 
         HashMap<String,LatLng> getHashMap = HashMapInstance.getHashMap();

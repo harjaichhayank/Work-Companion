@@ -14,13 +14,10 @@ public class SingleTonNotification {
     private static SingleTonNotification ourInstance = new SingleTonNotification();
 
     private Context appContext;
-
-    public static Context get() { return getInstance().getContext(); }
-
-    public static synchronized SingleTonNotification getInstance() { return ourInstance; }
-
     public void init(Context context) { if (appContext == null) { this.appContext = context; } }
 
+    public static Context get() { return getInstance().getContext(); }
+    public static synchronized SingleTonNotification getInstance() { return ourInstance; }
     private Context getContext() { return appContext; }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
