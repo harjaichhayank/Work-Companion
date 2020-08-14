@@ -21,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -41,9 +42,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -83,6 +86,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MapsActivity.this);
         LocationRequestUpdates();
+
+        /*---------------------------------------------------------------Firebase Messaging Within OnCreate ---------------------------------------------------------------*/
+
+        FirebaseMessaging.getInstance().subscribeToTopic("general")
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        String msg = "Successful";
+                        if (!task.isSuccessful()) {
+                            msg = "Failed";
+                        }
+                        Log.d(TAG, msg);
+                        Toast.makeText(MapsActivity.this, msg, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
